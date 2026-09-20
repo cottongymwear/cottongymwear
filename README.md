@@ -1,22 +1,51 @@
 # cottongymwear.com
 
 Static affiliate shortlist of gym wear that reads **100% cotton** on Amazon's Fabric type
-line. Dark UI, horizontal scroll-snap rails per category, cards ranked by the Amazon star
+line. Light editorial UI, swipeable photo decks per category, ordered by the Amazon star
 rating captured during the fibre check.
 
 The site lives at the repo root, so Vercel (or any static host) serves it with zero config.
 
 ```
-index.html            home — every category rail
-men.html              men's + unisex rails
-women.html            women's + unisex rails
+index.html            home — hero, featured deck, every category deck
+men.html              men's + unisex decks
+women.html            women's + unisex decks
 guides/               cotton vs polyester · best cotton gym shorts · how we pick
 assets/css/styles.css single stylesheet, no frameworks, no webfonts
-assets/js/rails.js    rail arrows + edge fades (progressive enhancement)
+assets/js/swipe.js    deck drag/arrows/progress + image fallback (progressive enhancement)
 data/product-shortlist.csv  the only source of product truth
+data/image-status.csv       which ASINs have a public Amazon photo
 tools/build.py        generates every HTML page from the CSV
+tools/check-images.py refreshes data/image-status.csv
 sitemap.xml           generated alongside the pages
 ```
+
+## The aesthetic
+
+The brief: *if Apple or Nike made a sparse affiliate page for 100% cotton gym wear.* The
+older dark, stat-heavy rail layout is gone. What replaced it:
+
+- **Light and quiet.** Off-white `#fbfbf9` canvas, white cards, hairline `#e6e4de` rules,
+  near-black ink. No dark surfaces, no accent colour doing the heavy lifting — the product
+  photography is the only colour on the page.
+- **Negative space first.** Big section padding, a centred hero, one idea per screen.
+- **System display type.** SF Pro / Segoe / Roboto stack at 600 weight with tight tracking
+  on headings. Zero webfonts, so zero render-blocking requests.
+- **Photos, not tables.** Every card leads with a square product image on a soft tile.
+- **Swipe decks.** Each category is a horizontally scroll-snapped deck. Touch uses the
+  browser's own momentum scrolling; mouse drag is wired up in `swipe.js`. The next card
+  always peeks in, a hairline progress thumb tracks position, a "Swipe" label fades after
+  the first movement, and arrow buttons appear when a deck overflows.
+- **One obvious CTA.** A full-width black "View on Amazon" pill pinned to the bottom of
+  every card, aligned across a row.
+- **Three words, always.** The brand renders as `Cotton` `Gym` `Wear` — separate spaced
+  spans in the header and footer, and spelled out in every `<title>`. Never jammed into
+  one word. (The bare domain `cottongymwear.com` is the exception, because it is a domain.)
+- **Calm copy.** Short, declarative, no stats dashboard. Honesty lines (fabric string,
+  ASIN, caveats) stay on the card but sit quietly at the bottom.
+
+Editing the look means editing `assets/css/styles.css` and the markup helpers in
+`tools/build.py` (`card_markup`, `deck_markup`, `page`), then rebuilding.
 
 ## Run locally
 
@@ -54,6 +83,30 @@ python3 tools/build.py --check  # non-zero exit if committed pages are stale
   duplicate ASINs shown as secondary links instead of padding the ranking.
 - Nothing is hand-written into the HTML, so a fibre percentage cannot be invented by editing
   a page.
+
+### Product photos
+
+Images come from the standard public Amazon catalogue URL for the ASIN:
+
+```
+https://m.media-amazon.com/images/P/{ASIN}.01._SCLZZZZZZZ_.jpg
+```
+
+Nothing else is ever used — no scraped CDN paths, no stand-in photo of a similar product.
+
+Amazon answers that URL with **HTTP 200 and a 43-byte 1×1 GIF** when an ASIN has no image
+there, which means `onerror` never fires. Two layers handle it:
+
+1. `python3 tools/check-images.py` probes every qualifying ASIN once and writes
+   `data/image-status.csv` (`asin,image` where image is `ok` or `missing`). The build reads
+   that file and emits a typographic placeholder tile instead of an `<img>` for the misses.
+   Re-run it when the CSV gains ASINs; if the file is absent the build assumes `ok`.
+2. `assets/js/swipe.js` re-checks at runtime — any image that decodes at ≤ 2 px wide, or
+   fails outright, swaps to the same placeholder. So a listing that loses its photo later
+   degrades gracefully without a rebuild.
+
+Where several ASINs were merged into one card, the photo comes from whichever of those
+ASINs has one — they are the same garment by definition of the merge.
 
 ## Deploy to Vercel (static, zero config)
 
@@ -100,17 +153,23 @@ To attach tracking once the Associates store id is approved:
 
 Compliance notes that are already handled:
 
-- The affiliate disclosure appears twice on every page that links to products — a callout
-  above the first rail and the long form in the footer.
+- The affiliate disclosure appears twice on every page that links to products — under the
+  header above the first deck, and the long form in the footer.
 - Guide pages without product links (guides index, cotton vs polyester, how we pick) still
   carry the footer disclosure.
-- Amazon prices are never hard-stated as current: cards say "About ~$X when we checked".
-  Keep it that way; Associates rules forbid publishing stale prices as live ones.
+- Amazon prices are never presented as current: every price band renders as `~$X` followed
+  by "when checked". Keep it that way; Associates rules forbid publishing stale prices as
+  live ones.
+- Product links keep `rel="nofollow sponsored noopener"`, including the photo link.
 
 ## Accessibility and performance
 
-- Skip link, `aria-current` on the active nav item, focus-visible rings, rails reachable by
-  keyboard (`tab` into the rail, then arrow keys), labelled rail buttons, `prefers-reduced-motion`
-  honoured.
-- Ratings expose a text value plus an `aria-label` on the star graphic.
-- No images, fonts, or third-party scripts: one CSS file and one ~2 KB JS file.
+- Skip link, `aria-current` on the active nav item, focus-visible rings, decks reachable by
+  keyboard (`tab` into a deck, then arrow keys), labelled arrow buttons,
+  `prefers-reduced-motion` honoured.
+- Ratings read as text ("4.5 on Amazon"); the star glyph is `aria-hidden`.
+- Card photos are decorative (`alt=""`) because the product name sits next to them, and the
+  photo link is `aria-hidden` with `tabindex="-1"` so it is not a duplicate tab stop.
+- Photos are lazy-loaded with explicit dimensions, so decks do not shift as they load. Apart
+  from the Amazon images there are no external requests: no fonts, no analytics, no CDN —
+  one CSS file and one ~4 KB JS file.

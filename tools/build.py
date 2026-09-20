@@ -167,8 +167,14 @@ class Product:
         return self.price_band.strip().startswith("~$")
 
     @property
-    def display_price(self) -> str:
-        return self.price_band.strip() if self.has_price else "Price on Amazon"
+    def price_markup(self) -> str:
+        """Associates rules forbid presenting a captured price as a live one."""
+        if not self.has_price:
+            return '<span class="price">Price on Amazon</span>'
+        return (
+            f'<span class="price">{e(self.price_band.strip())}</span>'
+            '<span class="price-note">when checked</span>'
+        )
 
     @property
     def sort_key(self) -> tuple:
@@ -271,11 +277,17 @@ def decks_for(products: list[Product], genders: set[str] | None = None) -> list[
 
 
 def featured(products: list[Product], limit: int = 8) -> list[Product]:
-    """One pick per category first, then the next best by rating. Deterministic."""
+    """The best-rated pick per category, then the next best by rating.
+
+    The showcase row leads with the listings that have a catalogue photo so the
+    page opens on product imagery rather than placeholders. Selection is still
+    by rating, and the category decks below stay in strict rating order.
+    """
     best = [items[0] for _, items in decks_for(products)]
     taken = {p.asin for p in best}
     rest = sorted((p for p in products if p.asin not in taken), key=lambda p: p.sort_key)
-    return (sorted(best, key=lambda p: p.sort_key) + rest)[:limit]
+    picks = (sorted(best, key=lambda p: p.sort_key) + rest)[:limit]
+    return sorted(picks, key=lambda p: (p.image_asin is None, *p.sort_key))
 
 
 # --------------------------------------------------------------------------- #
@@ -296,13 +308,15 @@ def media_markup(product: Product) -> str:
         "</span>"
     )
     image = ""
+    classes = "media media--empty"
     if asin:
+        classes = "media"
         image = (
             f'<img src="{e(IMAGE_URL.format(asin=asin))}" alt="" loading="lazy"'
             ' decoding="async" width="500" height="500" draggable="false" />'
         )
     return (
-        f'<a class="media" href="{e(product.link())}" rel="nofollow sponsored noopener"'
+        f'<a class="{classes}" href="{e(product.link())}" rel="nofollow sponsored noopener"'
         ' target="_blank" tabindex="-1" aria-hidden="true">'
         f"{fallback}{image}</a>"
     )
@@ -335,7 +349,7 @@ def card_markup(product: Product) -> str:
           <div class="card-body">
             <p class="card-kicker"><span>{e(product.display_brand)}</span><span>{e(GARMENT_LABEL[product.category])}</span></p>
             <h3 class="card-title">{e(product.display_name)}</h3>
-            <p class="card-meta"><span class="price">{e(product.display_price)}</span>{rating_markup(product)}</p>
+            <p class="card-meta">{product.price_markup}{rating_markup(product)}</p>
             <ul class="chips">{''.join(chips)}</ul>
             <p class="card-fine">{e(' '.join(fine))}</p>
             <a class="btn btn--solid card-cta" href="{e(product.link())}" rel="nofollow sponsored noopener" target="_blank">
@@ -508,7 +522,7 @@ def build_home(products: list[Product], rejected: list[dict]) -> tuple[str, str]
 {deck_markup(
     deck_id="deck-featured",
     title="Featured",
-    blurb="The highest-rated piece from each category, then the next best.",
+    blurb="The best-rated piece from each category, and a few more that passed.",
     note="Swipe or drag to browse. Every card links straight to the amazon.com listing.",
     products=picks,
 )}
