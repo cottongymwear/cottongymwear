@@ -723,6 +723,8 @@ section,
   flex: 1;
 }
 
+/* The price sits above the CTA so every card in a rail ends with the button at
+   the same height, whatever extra notes a card carries. */
 .price {
   margin: 0.55rem 0 0;
   font-size: 1.05rem;
@@ -732,7 +734,7 @@ section,
 }
 
 .card-cta {
-  margin-top: 0.7rem;
+  margin-top: 0.6rem;
   justify-content: center;
   font-size: 0.86rem;
 }
@@ -746,9 +748,10 @@ section,
 }
 
 .variants {
-  margin: 0.55rem 0 0;
+  margin: 0.5rem 0 0;
   font-size: 0.7rem;
   color: var(--faint);
+  line-height: 1.4;
 }
 
 .variants a {
@@ -756,7 +759,7 @@ section,
 }
 
 .asin {
-  margin: 0.45rem 0 0;
+  margin: 0.4rem 0 0;
   font-size: 0.66rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;

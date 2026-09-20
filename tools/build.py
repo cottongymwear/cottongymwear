@@ -288,12 +288,12 @@ def card_markup(product: Product, rank: int, category: Category) -> str:
           <p class="brand">{e(product.display_brand)}</p>
           <ul class="chips">{''.join(chips)}</ul>
           <p class="desc">{e(product.description(category.card_note))}</p>
+          {variants}
+          <p class="asin">ASIN {e(product.asin)}</p>
           <p class="price">{e(product.display_price)}</p>
           <a class="btn btn--accent card-cta" href="{e(product.link())}" rel="nofollow sponsored noopener" target="_blank">
             View on Amazon<span aria-hidden="true">\u2197</span>
           </a>
-          {variants}
-          <p class="asin">ASIN {e(product.asin)}</p>
         </article>"""
 
 
