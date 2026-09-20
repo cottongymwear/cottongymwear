@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cottongymwear.com/sitemap.xml

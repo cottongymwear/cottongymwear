@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cotton Gym Wear">
+  <rect width="64" height="64" rx="14" fill="#0a0a09"/>
+  <circle cx="32" cy="26" r="11" fill="#cdf85f"/>
+  <path d="M18 48c4-7 8.5-10 14-10s10 3 14 10" stroke="#cdf85f" stroke-width="5" stroke-linecap="round" fill="none"/>
+</svg>
