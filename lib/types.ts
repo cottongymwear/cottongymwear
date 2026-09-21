@@ -1,10 +1,10 @@
 export type Audience = "men" | "women" | "unisex";
 
-export type Category = "tee" | "tank" | "shorts" | "hoodie" | "joggers";
+export type Category = "tee" | "tank" | "long-sleeve";
 
 export type Size = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
-export type CottonClaim = "100" | "blend";
+export type CottonClaim = "100";
 
 export type CatalogVariant = {
   sku: string;
@@ -36,8 +36,7 @@ export type Product = {
     claim: CottonClaim;
   };
   printful: {
-    /** Printful catalog product id. Null when the numeric id still needs a catalog lookup. */
-    catalogProductId: number | null;
+    catalogProductId: number;
     blank: string;
     technique: "dtg";
   };

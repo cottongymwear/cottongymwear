@@ -25,7 +25,7 @@ export function CartView() {
     return (
       <div className="empty shell">
         <h1>Your bag is empty</h1>
-        <p className="lede">Tees, tanks, shorts, and warm-up layers — cotton where the blank allows it.</p>
+        <p className="lede">Cotton jersey for lifting and the walk out.</p>
         <p className="cta-row">
           <Link className="btn" href="/shop">
             Shop the catalog

@@ -6,10 +6,10 @@ import type { Category } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Men’s and women’s cotton gym wear. Tees, tanks, shorts, hoodies, and joggers.",
+  description: "Men’s and women’s cotton gym wear. Tees, tanks, and a long sleeve, in 100% cotton solids.",
 };
 
-const CATEGORIES: Array<Category | "all"> = ["all", "tee", "tank", "shorts", "hoodie", "joggers"];
+const CATEGORIES: Array<Category | "all"> = ["all", "tee", "tank", "long-sleeve"];
 
 function shopHref(audience: string, category: string) {
   const params = new URLSearchParams();
@@ -35,7 +35,8 @@ export default async function ShopPage({
         <p className="eyebrow">Catalog</p>
         <h1>Shop</h1>
         <p className="lede">
-          Men’s and women’s cuts, plus unisex fleece. Filter stays in the address bar so you can share a rack.
+          Men’s and women’s cuts, plus unisex jersey. Every solid here is 100% cotton. Filters stay in the
+          address bar.
         </p>
         <div className="filters" aria-label="Audience">
           {(["all", "men", "women"] as const).map((value) => (
@@ -51,7 +52,7 @@ export default async function ShopPage({
             </Link>
           ))}
         </div>
-        <p className="fine">Men and Women include unisex pieces. Jersey chips marked 100% cotton are solid colours only.</p>
+        <p className="fine">Men and Women include unisex pieces. Only Black, White, and Navy — not heather blends.</p>
         {products.length ? (
           <div className="grid">
             {products.map((product) => (

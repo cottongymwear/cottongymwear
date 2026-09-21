@@ -1,8 +1,8 @@
 # Cotton Gym Wear
 
-Direct shop for cotton gym wear. Jersey tees and tanks are 100% cotton solids. Fleece shorts, the hoodie, and the joggers are cotton-faced blends and are labeled that way. Prices are in GBP. Checkout ships to the United Kingdom and the United States.
+Direct shop for cotton gym wear. Every piece is a Printful blank whose Black, White, and Navy are 100% cotton. Heather and poly-fleece cuts are not sold. Prices are in GBP. Checkout ships to the United Kingdom and the United States.
 
-This replaced the old static Amazon shortlist. There are no affiliate links.
+This is a print-on-demand shop, separate from any affiliate shortlist. There are no affiliate links and no affiliate disclosure on the checkout path.
 
 ## Stack
 
@@ -33,11 +33,24 @@ Copy `.env.example` to `.env.local` when you are ready to connect services. The 
 
 ## Catalog
 
-Ten products live in `lib/catalog.ts`: men’s and women’s tees, tanks, and shorts, plus a heavyweight tee, hoodie, and joggers. Each variant SKU is the Printful `external_id` to set later, for example `cgw-mens-training-tee-black-m`.
+Eight products live in `lib/catalog.ts`: men’s and women’s cotton tees, a muscle tank, and a long sleeve. Each one has a Printful catalog product id. Colours are only Black, White, and Navy.
 
-Known Printful catalog product ids are filled in where the public catalog page confirms them (Bella + Canvas 3001 is `71`, and so on). A few women’s blanks still have `catalogProductId: null` until you confirm the id with `GET /products`. Orders do not need that id. They need a **sync variant** whose `external_id` is the SKU.
+| Piece | Blank | Printful id |
+| --- | --- | --- |
+| Training Tee | Bella + Canvas 3001 | 71 |
+| Heavy Cotton Tee | Gildan 5000 | 438 |
+| V-Neck Tee | Bella + Canvas 3005 | 223 |
+| Muscle Tank | Bella + Canvas 3480 | 248 |
+| Relaxed Tee | Bella + Canvas 6400 | 360 |
+| Softstyle Tee | Gildan 64000 | 12 |
+| Heavyweight Tee | Comfort Colors 1717 | 586 |
+| Long Sleeve | Bella + Canvas 3501 | 356 |
 
-Placeholder art is drawn in the page. Replace it with Printful mockup URLs when designs exist. Do not commit photos you do not have rights to use.
+Each variant SKU is the Printful `external_id` to set later, for example `cgw-mens-training-tee-black-m`. Orders need a **sync variant** with that external id. The catalog product id is for reference and for live shipping quotes.
+
+Do not add a short, jogger, hoodie, sock, or bra until that blank’s solid colour is verified 100% cotton. Many Printful fleece and sock blanks are poly blends.
+
+Placeholder art is drawn in the page. Replace it with Printful mockups when designs exist. Do not commit photos you do not have rights to use. The products are not copied from any other retailer’s listings.
 
 ## Environment
 
@@ -55,7 +68,7 @@ Never commit `.env.local` or real keys.
 ## Connect Printful
 
 1. Create a Printful store. Set the store currency to **GBP** so shipping quotes match the shop.
-2. Add the ten blanks from `lib/catalog.ts`, solids only: Black, White, Navy. Skip heather colours on the jersey styles.
+2. Add the eight blanks from `lib/catalog.ts`, solids only: Black, White, Navy. Skip heather, ash, and sport grey.
 3. On each sync product, set the external id to the product id (`cgw-mens-training-tee`). On each size/colour variant, set the external id to the SKU (`cgw-mens-training-tee-black-m`).
 4. Put the private token in `PRINTFUL_API_KEY`.
 5. `GET /api/printful/status` reports how many store products exist and how many SKUs matched. It does not print the token.
@@ -86,9 +99,8 @@ Checkout collects the address on this site (UK default, US optional), charges th
 
 ## Still to do before a public launch
 
-- Register or connect `cottongymwear.com` if the purchase is still pending.
-- Open the Printful account, upload the real artwork, and link every SKU.
+- Buy and connect `cottongymwear.com`. DNS is outside this repo. Until then, the Vercel preview URL is enough. Set `NEXT_PUBLIC_SITE_URL` to the host you are actually using.
+- Open the Printful account, pay for fulfillment there, upload the artwork, and link every SKU.
 - Turn on Stripe live keys only after a test-mode payment creates a Printful **draft**.
 - Set `PRINTFUL_AUTO_CONFIRM=true` only when drafts should be produced and shipped.
 - Swap placeholder art for Printful mockups.
-- Confirm the women’s v-neck, muscle tank, and studio short blanks (catalog ids are intentionally unset).

@@ -1,9 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { CartProvider } from "@/components/CartProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { getSiteUrl, printfulConfigured } from "@/lib/site";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  themeColor: "#fbfbf9",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -12,10 +16,10 @@ export const metadata: Metadata = {
     template: "%s — Cotton Gym Wear",
   },
   description:
-    "Cotton gym wear, sold direct. Jersey tees and tanks in 100% cotton solids, plus cotton-faced fleece layers. Ships to the UK and the US.",
+    "Cotton gym wear, sold direct. Tees and tanks in 100% cotton solids for lifting and light training. Ships to the UK and the US.",
   openGraph: {
     title: "Cotton Gym Wear",
-    description: "Direct shop for cotton gym wear. Ships to the UK and the US.",
+    description: "100% cotton solids for lifting and gym-to-street. Ships to the UK and the US.",
     siteName: "Cotton Gym Wear",
     type: "website",
   },

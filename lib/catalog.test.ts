@@ -4,27 +4,28 @@ import test from "node:test";
 import { CATALOG, findVariant } from "./catalog";
 import { PREVIEW_RATES } from "./shipping";
 
-test("catalog has a launch subset of cotton gym pieces", () => {
+test("catalog is eight or more verified cotton solids", () => {
   assert.ok(CATALOG.length >= 8 && CATALOG.length <= 12);
   const categories = new Set(CATALOG.map((item) => item.category));
-  for (const category of ["tee", "tank", "shorts", "hoodie", "joggers"]) {
-    assert.ok(categories.has(category as never), category);
-  }
-  assert.ok(CATALOG.filter((item) => item.audience === "men").length >= 3);
-  assert.ok(CATALOG.filter((item) => item.audience === "women").length >= 3);
+  assert.ok(categories.has("tee"));
+  assert.ok(categories.has("tank"));
+  assert.equal(categories.has("shorts" as never), false);
+  assert.ok(CATALOG.some((item) => item.audience === "men"));
+  assert.ok(CATALOG.some((item) => item.audience === "women"));
 });
 
-test("jersey pieces claim 100% cotton and fleece pieces do not", () => {
+test("every piece is a 100% cotton solid with a Printful blank id", () => {
+  const colours = new Set(["black", "white", "navy"]);
   for (const item of CATALOG) {
-    if (item.category === "tee" || item.category === "tank") {
-      assert.equal(item.fabric.claim, "100");
-      assert.match(item.fabric.label, /100% cotton/i);
-    } else {
-      assert.equal(item.fabric.claim, "blend");
-      assert.doesNotMatch(item.fabric.label, /^100% cotton/i);
-    }
+    assert.equal(item.fabric.claim, "100");
+    assert.match(item.fabric.label, /100% cotton/i);
+    assert.doesNotMatch(item.fabric.label, /polyester|blend/i);
+    assert.equal(typeof item.printful.catalogProductId, "number");
     assert.ok(item.price > 0);
     assert.ok(item.variants.length >= 9);
+    for (const variant of item.variants) {
+      assert.ok(colours.has(variant.colorId));
+    }
   }
 });
 
