@@ -23,6 +23,7 @@ export type Product = {
   name: string;
   audience: Audience;
   category: Category;
+  neckline?: "crew" | "v";
   summary: string;
   description: string;
   /** Retail price in pence (GBP). */
