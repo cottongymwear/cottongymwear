@@ -7,6 +7,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     "",
     "/shop",
+    "/men",
+    "/women",
     "/about",
     ...CATALOG.map((product) => `/product/${product.slug}`),
   ].map((path) => ({
