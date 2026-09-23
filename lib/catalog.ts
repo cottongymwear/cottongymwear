@@ -94,6 +94,7 @@ export const CATALOG: Product[] = [
     name: "V-Neck Tee",
     audience: "men",
     category: "tee",
+    neckline: "v",
     summary: "Cotton v-neck in the same jersey family as the crew.",
     description:
       "A deeper neckline for warmer rooms and lighter sessions. Cut like the men’s jersey, not a running singlet.",
@@ -207,11 +208,41 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   "long-sleeve": "Long sleeves",
 };
 
+export const CATEGORY_SINGULAR: Record<Category, string> = {
+  tee: "Tee",
+  tank: "Tank",
+  "long-sleeve": "Long sleeve",
+};
+
 export const AUDIENCE_LABEL: Record<Audience, string> = {
   men: "Men",
   women: "Women",
   unisex: "Unisex",
 };
+
+export const AUDIENCE_POSSESSIVE: Record<Audience, string> = {
+  men: "Men’s",
+  women: "Women’s",
+  unisex: "Unisex",
+};
+
+export function isAudience(value: unknown): value is "men" | "women" {
+  return value === "men" || value === "women";
+}
+
+export function isCategory(value: unknown): value is Category {
+  return value === "tee" || value === "tank" || value === "long-sleeve";
+}
+
+export function relatedProducts(product: Product, limit = 4): Product[] {
+  const sameAudience = CATALOG.filter(
+    (item) =>
+      item.id !== product.id &&
+      (product.audience === "unisex" || item.audience === product.audience || item.audience === "unisex"),
+  );
+  const rest = CATALOG.filter((item) => item.id !== product.id && !sameAudience.includes(item));
+  return [...sameAudience, ...rest].slice(0, limit);
+}
 
 export function getProduct(slug: string): Product | undefined {
   return CATALOG.find((item) => item.slug === slug);
@@ -226,9 +257,8 @@ export function findVariant(sku: string) {
 }
 
 export function filterProducts(audience: string | undefined, category: string | undefined): Product[] {
-  const audienceOk = audience === "men" || audience === "women" ? audience : "all";
-  const categoryOk =
-    category === "tee" || category === "tank" || category === "long-sleeve" ? category : "all";
+  const audienceOk = isAudience(audience) ? audience : "all";
+  const categoryOk = isCategory(category) ? category : "all";
 
   return CATALOG.filter((item) => {
     const matchesAudience =

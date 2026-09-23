@@ -1,31 +1,36 @@
 import Link from "next/link";
-import { AUDIENCE_LABEL, CATEGORY_LABEL, formatGbp } from "@/lib/catalog";
+import { AUDIENCE_POSSESSIVE, CATEGORY_SINGULAR, formatGbp } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 import { ProductArt } from "./ProductArt";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, colorId }: { product: Product; colorId?: string }) {
   return (
-    <article className="card">
-      <Link className="stretch" href={`/product/${product.slug}`}>
-        <ProductArt
-          category={product.category}
-          swatch={product.colors[0]?.swatch ?? "#141414"}
-          title=""
-        />
-        <div className="card-body">
-          <p className="kicker">
-            {AUDIENCE_LABEL[product.audience]} · {CATEGORY_LABEL[product.category]}
+    <article className="pcard">
+      <Link
+        className="pcard-link"
+        href={colorId && colorId !== product.colors[0]?.id ? `/product/${product.slug}?color=${colorId}` : `/product/${product.slug}`}
+      >
+        <ProductArt product={product} colorId={colorId} className="art pcard-media" />
+        <div className="pcard-info">
+          <h3 className="pcard-name">{product.name}</h3>
+          <p className="pcard-sub">
+            {AUDIENCE_POSSESSIVE[product.audience]} {CATEGORY_SINGULAR[product.category].toLowerCase()}
           </p>
-          <h3>{product.name}</h3>
-          <p className="meta">{product.summary}</p>
-          <p className="price">{formatGbp(product.price)}</p>
-          <ul className="chips">
-            <li className={product.fabric.claim === "100" ? "chip chip--cotton" : "chip"}>
-              {product.fabric.label}
-            </li>
-          </ul>
+          <div className="pcard-foot">
+            <span className="pcard-price">{formatGbp(product.price)}</span>
+            <span className="swatches" aria-label={`${product.colors.length} colours`}>
+              {product.colors.map((color) => (
+                <i key={color.id} style={{ background: color.swatch }} title={color.name} />
+              ))}
+            </span>
+          </div>
         </div>
       </Link>
     </article>
   );
+}
+
+/** Alternates the colour shown across a row so a grid is not a wall of one colour. */
+export function rotatingColor(product: Product, index: number): string | undefined {
+  return product.colors[index % product.colors.length]?.id;
 }

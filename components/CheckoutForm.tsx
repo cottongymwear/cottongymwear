@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { findVariant, formatGbp } from "@/lib/catalog";
+import { AUDIENCE_POSSESSIVE, findVariant, formatGbp } from "@/lib/catalog";
 import type { ShippingRate } from "@/lib/types";
 import { useCart } from "./CartProvider";
+import { BagIcon, LockIcon } from "./Icons";
+import { ProductArt } from "./ProductArt";
 
 type Quote = {
   source: "printful" | "preview";
@@ -13,6 +15,14 @@ type Quote = {
 };
 
 const ORDER_KEY = "cgw-last-order";
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  return message ? (
+    <span className="error-text" id={id}>
+      {message}
+    </span>
+  ) : null;
+}
 
 export function CheckoutForm({ paymentsLive }: { paymentsLive: boolean }) {
   const { lines, ready, clear } = useCart();
@@ -24,6 +34,7 @@ export function CheckoutForm({ paymentsLive }: { paymentsLive: boolean }) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
   const [canceled, setCanceled] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const detailed = useMemo(
     () =>
@@ -35,6 +46,7 @@ export function CheckoutForm({ paymentsLive }: { paymentsLive: boolean }) {
   );
   const subtotal = detailed.reduce((sum, line) => sum + line.match.product.price * line.quantity, 0);
   const rate = quote?.rates.find((entry) => entry.id === shippingMethod) ?? quote?.rates[0];
+  const total = subtotal + (rate?.amount ?? 0);
 
   useEffect(() => {
     setCanceled(new URLSearchParams(window.location.search).get("canceled") === "1");
@@ -64,18 +76,26 @@ export function CheckoutForm({ paymentsLive }: { paymentsLive: boolean }) {
   }, [country, postcode, detailed, ready]);
 
   if (!ready) {
-    return <p className="shell section">Loading checkout…</p>;
+    return (
+      <div className="shell page">
+        <p className="muted">Loading checkout…</p>
+      </div>
+    );
   }
 
   if (!detailed.length) {
     return (
-      <div className="empty shell">
-        <h1>Nothing to check out</h1>
-        <p className="cta-row">
+      <div className="shell page">
+        <div className="empty-state">
+          <span className="empty-icon">
+            <BagIcon size={28} />
+          </span>
+          <h1 className="empty-title">Nothing to check out</h1>
+          <p className="muted">Add a piece to your bag, then come back here.</p>
           <Link className="btn" href="/shop">
-            Shop the catalog
+            Shop the rack
           </Link>
-        </p>
+        </div>
       </div>
     );
   }
@@ -129,148 +149,205 @@ export function CheckoutForm({ paymentsLive }: { paymentsLive: boolean }) {
     }
   }
 
+  const invalid = (key: string) =>
+    fieldErrors[key] ? { "aria-invalid": true as const, "aria-describedby": `${key}-error` } : {};
+
   return (
-    <div className="shell section layout-2">
-      <form
-        className="form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void onSubmit(new FormData(event.currentTarget));
-        }}
-      >
-        <div>
-          <p className="eyebrow">Checkout</p>
-          <h1>Delivery</h1>
-          <p className="lede">United Kingdom by default. United States is available too. Prices stay in GBP.</p>
-        </div>
-        {canceled ? (
-          <p className="banner" role="status">
-            Payment was canceled. Your bag is still here.
+    <div className="shell page checkout">
+      <header className="page-head page-head--tight">
+        <h1>Checkout</h1>
+        {!paymentsLive ? (
+          <p className="notice" role="note">
+            Preview checkout. Stripe is not connected, so no card is charged and no Printful order is created.
           </p>
         ) : null}
-        {error ? (
-          <p className="alert" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <label>
-          Full name
-          <input name="name" autoComplete="name" required aria-invalid={Boolean(fieldErrors.name)} />
-        </label>
-        {fieldErrors.name ? <p className="fine">{fieldErrors.name}</p> : null}
-        <label>
-          Email
-          <input name="email" type="email" autoComplete="email" required />
-        </label>
-        {fieldErrors.email ? <p className="fine">{fieldErrors.email}</p> : null}
-        <label>
-          Phone <span className="fine">(optional)</span>
-          <input name="phone" type="tel" autoComplete="tel" />
-        </label>
-        <label>
-          Country
-          <select
-            name="country"
-            value={country}
-            onChange={(event) => setCountry(event.target.value === "US" ? "US" : "GB")}
+      </header>
+
+      <div className="split split--checkout">
+        <aside className="summary-card checkout-summary" aria-label="Order summary" data-open={summaryOpen || undefined}>
+          <button
+            type="button"
+            className="summary-toggle"
+            aria-expanded={summaryOpen}
+            aria-controls="order-summary-body"
+            onClick={() => setSummaryOpen((open) => !open)}
           >
-            <option value="GB">United Kingdom</option>
-            <option value="US">United States</option>
-          </select>
-        </label>
-        <label>
-          Address line 1
-          <input name="address1" autoComplete="address-line1" required />
-        </label>
-        {fieldErrors.address1 ? <p className="fine">{fieldErrors.address1}</p> : null}
-        <label>
-          Address line 2 <span className="fine">(optional)</span>
-          <input name="address2" autoComplete="address-line2" />
-        </label>
-        <label>
-          City
-          <input name="city" autoComplete="address-level2" required />
-        </label>
-        <label>
-          {country === "US" ? "State" : "County"} {country === "GB" ? <span className="fine">(optional)</span> : null}
-          <input name="region" autoComplete="address-level1" required={country === "US"} />
-        </label>
-        {fieldErrors.region ? <p className="fine">{fieldErrors.region}</p> : null}
-        <label>
-          {country === "US" ? "ZIP code" : "Postcode"}
-          <input
-            name="postcode"
-            autoComplete="postal-code"
-            required
-            value={postcode}
-            onChange={(event) => setPostcode(event.target.value)}
-          />
-        </label>
-        {fieldErrors.postcode ? <p className="fine">{fieldErrors.postcode}</p> : null}
-        <fieldset className="rates">
-          <legend>Shipping</legend>
-          {(quote?.rates ?? []).map((entry) => (
-            <label key={entry.id}>
-              <input
-                type="radio"
-                name="shippingMethod"
-                value={entry.id}
-                checked={shippingMethod === entry.id}
-                onChange={() => setShippingMethod(entry.id)}
-              />
-              <span>
-                <strong>
-                  {entry.name} · {formatGbp(entry.amount)}
-                </strong>
-                <br />
-                <span className="fine">{entry.detail}</span>
-              </span>
+            <span>{summaryOpen ? "Hide order summary" : "Show order summary"}</span>
+            <strong>{formatGbp(total)}</strong>
+          </button>
+          <div className="summary-body" id="order-summary-body">
+            <h2 className="summary-title">Order summary</h2>
+            <ul className="summary-lines">
+              {detailed.map((line) => (
+                <li key={line.sku}>
+                  <span className="summary-thumb">
+                    <ProductArt product={line.match.product} colorId={line.match.variant.colorId} className="art art--thumb" />
+                    <span className="summary-qty">{line.quantity}</span>
+                  </span>
+                  <span className="summary-name">
+                    {line.match.product.name}
+                    <span className="muted">
+                      {AUDIENCE_POSSESSIVE[line.match.product.audience]} · {line.match.variant.color} ·{" "}
+                      {line.match.variant.size}
+                    </span>
+                  </span>
+                  <span>{formatGbp(line.match.product.price * line.quantity)}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="total-row">
+              <span>Subtotal</span>
+              <span>{formatGbp(subtotal)}</span>
+            </p>
+            <p className="total-row">
+              <span>Delivery</span>
+              <span>{rate ? formatGbp(rate.amount) : "—"}</span>
+            </p>
+            <p className="total-row total-row--grand">
+              <span>Total</span>
+              <strong>
+                <span className="muted currency">GBP</span> {formatGbp(total)}
+              </strong>
+            </p>
+          </div>
+        </aside>
+
+        <form
+          className="checkout-form"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onSubmit(new FormData(event.currentTarget));
+          }}
+        >
+          {canceled ? (
+            <p className="notice" role="status">
+              Payment was canceled. Your bag is still here.
+            </p>
+          ) : null}
+          {error ? (
+            <p className="alert" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <section className="form-section">
+            <h2>Contact</h2>
+            <label className="field">
+              <span>Email</span>
+              <input name="email" type="email" autoComplete="email" required {...invalid("email")} />
+              <FieldError id="email-error" message={fieldErrors.email} />
             </label>
-          ))}
-        </fieldset>
-        {quote?.notice ? <p className="fine">{quote.notice}</p> : null}
-        <button className="btn" type="submit" disabled={pending || !rate}>
-          {pending
-            ? "Working…"
-            : paymentsLive
-              ? `Pay ${formatGbp(subtotal + (rate?.amount ?? 0))} with Stripe`
-              : `Place preview order · ${formatGbp(subtotal + (rate?.amount ?? 0))}`}
-        </button>
-        <p className="fine">
-          {paymentsLive
-            ? "Card payment is handled by Stripe. A paid order is sent to Printful from the webhook."
-            : "Stripe is not configured, so this preview does not charge a card or create a Printful order."}
-        </p>
-      </form>
-      <aside className="summary" aria-label="Order summary">
-        <h2>Summary</h2>
-        <ul>
-          {detailed.map((line) => (
-            <li className="row" key={line.sku}>
+            <label className="field">
               <span>
-                {line.match.product.name}
-                <br />
-                <span className="fine">
-                  {line.match.variant.color} · {line.match.variant.size} · {line.quantity}
-                </span>
+                Phone <span className="muted">(optional)</span>
               </span>
-              <span>{formatGbp(line.match.product.price * line.quantity)}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="row">
-          <span>Subtotal</span>
-          <span>{formatGbp(subtotal)}</span>
-        </p>
-        <p className="row">
-          <span>Shipping</span>
-          <span>{rate ? formatGbp(rate.amount) : "—"}</span>
-        </p>
-        <p className="row">
-          <strong>Total</strong>
-          <strong>{formatGbp(subtotal + (rate?.amount ?? 0))}</strong>
-        </p>
-      </aside>
+              <input name="phone" type="tel" autoComplete="tel" />
+            </label>
+          </section>
+
+          <section className="form-section">
+            <h2>Delivery</h2>
+            <label className="field">
+              <span>Country</span>
+              <select
+                name="country"
+                value={country}
+                onChange={(event) => setCountry(event.target.value === "US" ? "US" : "GB")}
+              >
+                <option value="GB">United Kingdom</option>
+                <option value="US">United States</option>
+              </select>
+            </label>
+            <label className="field">
+              <span>Full name</span>
+              <input name="name" autoComplete="name" required {...invalid("name")} />
+              <FieldError id="name-error" message={fieldErrors.name} />
+            </label>
+            <label className="field">
+              <span>Address</span>
+              <input name="address1" autoComplete="address-line1" required {...invalid("address1")} />
+              <FieldError id="address1-error" message={fieldErrors.address1} />
+            </label>
+            <label className="field">
+              <span>
+                Flat, suite, etc. <span className="muted">(optional)</span>
+              </span>
+              <input name="address2" autoComplete="address-line2" />
+            </label>
+            <div className="field-row">
+              <label className="field">
+                <span>{country === "US" ? "City" : "Town or city"}</span>
+                <input name="city" autoComplete="address-level2" required {...invalid("city")} />
+                <FieldError id="city-error" message={fieldErrors.city} />
+              </label>
+              <label className="field">
+                <span>
+                  {country === "US" ? "State" : "County"}{" "}
+                  {country === "GB" ? <span className="muted">(optional)</span> : null}
+                </span>
+                <input name="region" autoComplete="address-level1" required={country === "US"} {...invalid("region")} />
+                <FieldError id="region-error" message={fieldErrors.region} />
+              </label>
+            </div>
+            <label className="field">
+              <span>{country === "US" ? "ZIP code" : "Postcode"}</span>
+              <input
+                name="postcode"
+                autoComplete="postal-code"
+                required
+                value={postcode}
+                onChange={(event) => setPostcode(event.target.value)}
+                {...invalid("postcode")}
+              />
+              <FieldError id="postcode-error" message={fieldErrors.postcode} />
+            </label>
+          </section>
+
+          <fieldset className="form-section rates">
+            <legend>
+              <h2>Delivery method</h2>
+            </legend>
+            {quote ? (
+              quote.rates.map((entry) => (
+                <label key={entry.id} className="rate">
+                  <input
+                    type="radio"
+                    name="shippingMethod"
+                    value={entry.id}
+                    checked={shippingMethod === entry.id}
+                    onChange={() => setShippingMethod(entry.id)}
+                  />
+                  <span className="rate-body">
+                    <span className="rate-name">{entry.name}</span>
+                    <span className="muted">{entry.detail}</span>
+                  </span>
+                  <span className="rate-price">{formatGbp(entry.amount)}</span>
+                </label>
+              ))
+            ) : (
+              <p className="muted">Loading delivery rates…</p>
+            )}
+            {quote?.notice ? <p className="fine">{quote.notice}</p> : null}
+          </fieldset>
+
+          <div className="pay">
+            <button className="btn btn--block btn--lg" type="submit" disabled={pending || !rate}>
+              {pending
+                ? "Working…"
+                : paymentsLive
+                  ? `Pay ${formatGbp(total)}`
+                  : `Place preview order · ${formatGbp(total)}`}
+            </button>
+            <p className="fine pay-note">
+              <LockIcon size={14} />
+              {paymentsLive
+                ? "Card payment is handled by Stripe. Your order is sent to Printful once payment clears."
+                : "Preview only. No card is charged and nothing is sent to Printful."}
+            </p>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -14,6 +14,22 @@ This is a print-on-demand shop, separate from any affiliate shortlist. There are
 
 Printful’s own hosted store was not used. The shop is this site; Printful prints and ships after payment.
 
+## Design
+
+Sparse product commerce: off-white canvas (`#fafaf8`), white cards only where a surface is needed, hairline `#e6e5e0` rules, near-black ink. The garments are the only colour on the page.
+
+- **Type:** Geist Sans from the `geist` package (self-hosted by `next/font`, no network request at build time), with a system fallback. Tight tracking on headings, calm body copy.
+- **Wordmark:** always three words, `Cotton · Gym · Wear`, spaced in the header, the menu sheet, and the footer. Page titles use `… — Cotton Gym Wear`.
+- **Navigation:** Shop all, Men, Women, and About. On phones the links move into a full-screen menu sheet, with the bag button on the right.
+- **Browsing:** the home rack and “Also on the rack” are scroll-snap swipe decks with a progress bar, plus arrow buttons on desktop. Listing pages use a two-column grid on phones and three or four columns on desktop. Cards rotate Black, White, and Navy so a grid is not one colour, and each card opens the product in the colour it showed.
+- **Product page:** a swipeable colour gallery kept in sync with the swatches, a size grid that asks for a size before adding, one black “Add to bag” button, and Details, Cloth, Delivery, and Care in an accordion.
+- **Bag:** adding a piece opens a slide-over bag drawer with quantity steppers and a Checkout button. `/cart` is the full-page version.
+- **Checkout:** Contact, Delivery, and Delivery method sections. The order summary collapses behind a toggle on phones and stays sticky on desktop. Preview mode is stated at the top and under the pay button.
+
+Styles live in `app/globals.css`. Garment illustrations are SVG (`components/Garment.tsx`) drawn in Black, White, and Navy. They are labelled as illustrations on the product page and should be replaced with Printful mockups once artwork is uploaded.
+
+Routes: `/`, `/shop`, `/men`, `/women` (each takes `?category=tee|tank|long-sleeve`), `/product/[slug]` (takes `?color=white|navy`), `/cart`, `/checkout`, `/checkout/confirmation`, and `/about`. Old `/shop?audience=men` links redirect to `/men`.
+
 ## Run locally
 
 ```bash
@@ -50,7 +66,7 @@ Each variant SKU is the Printful `external_id` to set later, for example `cgw-me
 
 Do not add a short, jogger, hoodie, sock, or bra until that blank’s solid colour is verified 100% cotton. Many Printful fleece and sock blanks are poly blends.
 
-Placeholder art is drawn in the page. Replace it with Printful mockups when designs exist. Do not commit photos you do not have rights to use. The products are not copied from any other retailer’s listings.
+Illustrated garments are drawn in the page (`components/Garment.tsx`). Replace them with Printful mockups when designs exist. Do not commit photos you do not have rights to use. The products are not copied from any other retailer’s listings.
 
 ## Environment
 
@@ -92,8 +108,8 @@ Checkout collects the address on this site (UK default, US optional), charges th
 
 ## Deploy on Vercel
 
-1. Import the GitHub repository. Framework preset: Next.js.
-2. Add the environment variables above for Preview and Production. Use the preview URL as `NEXT_PUBLIC_SITE_URL` until the domain resolves.
+1. Import the GitHub repository. `vercel.json` pins the Next.js framework preset, which overrides the "Other" preset left over from the old static site.
+2. Add the environment variables above for Preview and Production. If `NEXT_PUBLIC_SITE_URL` is unset, the site uses the Vercel deployment URL, so previews work without it.
 3. Deploy. `npm run build` is the build command.
 4. When `cottongymwear.com` is registered, add the apex and `www` in Vercel → Domains and set `NEXT_PUBLIC_SITE_URL=https://cottongymwear.com`. HTTPS follows once DNS points at Vercel.
 
@@ -103,4 +119,4 @@ Checkout collects the address on this site (UK default, US optional), charges th
 - Open the Printful account, pay for fulfillment there, upload the artwork, and link every SKU.
 - Turn on Stripe live keys only after a test-mode payment creates a Printful **draft**.
 - Set `PRINTFUL_AUTO_CONFIRM=true` only when drafts should be produced and shipped.
-- Swap placeholder art for Printful mockups.
+- Swap the illustrated garments for Printful mockups.

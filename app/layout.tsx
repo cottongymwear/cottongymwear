@@ -1,4 +1,6 @@
+import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
+import { BagDrawer } from "@/components/BagDrawer";
 import { CartProvider } from "@/components/CartProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -6,7 +8,7 @@ import { getSiteUrl, printfulConfigured } from "@/lib/site";
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#fbfbf9",
+  themeColor: "#fafaf8",
 };
 
 export const metadata: Metadata = {
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s — Cotton Gym Wear",
   },
   description:
-    "Cotton gym wear, sold direct. Tees and tanks in 100% cotton solids for lifting and light training. Ships to the UK and the US.",
+    "Cotton Gym Wear, sold direct. Tees, tanks, and long sleeves in 100% cotton solids for lifting and light training. Ships to the UK and the US.",
   openGraph: {
     title: "Cotton Gym Wear",
     description: "100% cotton solids for lifting and gym-to-street. Ships to the UK and the US.",
@@ -27,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB">
+    <html lang="en-GB" className={GeistSans.variable}>
       <body>
         <a className="skip-link" href="#main">
           Skip to content
@@ -37,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Header />
             <main id="main">{children}</main>
             <Footer fulfillment={printfulConfigured() ? "printful" : "sample"} />
+            <BagDrawer />
           </CartProvider>
         </div>
       </body>

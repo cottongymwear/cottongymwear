@@ -22,6 +22,9 @@ type CartContextValue = {
   setQuantity: (sku: string, quantity: number) => void;
   remove: (sku: string) => void;
   clear: () => void;
+  bagOpen: boolean;
+  openBag: () => void;
+  closeBag: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -83,10 +86,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clear = useCallback(() => setLines([]), []);
 
+  const [bagOpen, setBagOpen] = useState(false);
+  const openBag = useCallback(() => setBagOpen(true), []);
+  const closeBag = useCallback(() => setBagOpen(false), []);
+
   const value = useMemo<CartContextValue>(() => {
     const count = lines.reduce((sum, line) => sum + line.quantity, 0);
-    return { ready, lines, count, add, setQuantity, remove, clear };
-  }, [lines, ready, add, setQuantity, remove, clear]);
+    return { ready, lines, count, add, setQuantity, remove, clear, bagOpen, openBag, closeBag };
+  }, [lines, ready, add, setQuantity, remove, clear, bagOpen, openBag, closeBag]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

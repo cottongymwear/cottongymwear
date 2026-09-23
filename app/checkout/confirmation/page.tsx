@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClearBag } from "@/components/ClearBag";
+import { CheckIcon } from "@/components/Icons";
 import { PreviewOrder } from "@/components/PreviewOrder";
 import { formatGbp } from "@/lib/catalog";
 import { getStripe } from "@/lib/stripe";
@@ -9,6 +10,20 @@ export const metadata: Metadata = {
   title: "Order",
   robots: { index: false, follow: false },
 };
+
+function Message({ title, body }: { title: string; body?: string }) {
+  return (
+    <div className="shell page">
+      <div className="empty-state">
+        <h1 className="empty-title">{title}</h1>
+        {body ? <p className="muted">{body}</p> : null}
+        <Link className="btn" href="/shop">
+          Back to the shop
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default async function ConfirmationPage({
   searchParams,
@@ -19,21 +34,12 @@ export default async function ConfirmationPage({
   if (params.preview === "1") return <PreviewOrder />;
 
   if (!params.session_id) {
-    return (
-      <div className="empty shell">
-        <h1>No order to show</h1>
-        <p className="lede">Checkout returns you here after payment.</p>
-      </div>
-    );
+    return <Message title="No order to show" body="Checkout returns you here after payment." />;
   }
 
   const stripe = getStripe();
   if (!stripe) {
-    return (
-      <div className="empty shell">
-        <h1>Payments are not configured</h1>
-      </div>
-    );
+    return <Message title="Payments are not configured" />;
   }
 
   try {
@@ -41,28 +47,31 @@ export default async function ConfirmationPage({
     const paid = session.payment_status === "paid";
     const total = typeof session.amount_total === "number" ? formatGbp(session.amount_total) : null;
     return (
-      <div className="shell section prose">
+      <div className="shell page receipt">
         {paid ? <ClearBag /> : null}
-        <p className="banner" role="status">
-          {paid
-            ? "Payment received. Printful fulfillment runs from the Stripe webhook once variants are linked."
-            : "This payment is not complete yet."}
-        </p>
-        <h1>{paid ? "Thank you" : "Payment pending"}</h1>
-        {session.customer_email ? <p>Receipt email: {session.customer_email}</p> : null}
-        {total ? <p>Total charged: {total}.</p> : null}
-        <p>
-        <Link className="btn" href="/shop">
-          Back to the shop
-        </Link>
-        </p>
+        <div className="receipt-head">
+          {paid ? (
+            <span className="receipt-check">
+              <CheckIcon size={26} />
+            </span>
+          ) : null}
+          <h1>{paid ? "Thank you." : "Payment pending"}</h1>
+          <p className="lede">
+            {paid
+              ? "Payment received. Your order goes to Printful for printing."
+              : "This payment is not complete yet."}
+          </p>
+          {session.customer_email ? <p className="muted">Receipt sent to {session.customer_email}</p> : null}
+          {total ? <p className="muted">Total charged: {total}</p> : null}
+        </div>
+        <div className="cta-row cta-row--center">
+          <Link className="btn btn--lg" href="/shop">
+            Continue shopping
+          </Link>
+        </div>
       </div>
     );
   } catch {
-    return (
-      <div className="empty shell">
-        <h1>We could not find that payment</h1>
-      </div>
-    );
+    return <Message title="We could not find that payment" />;
   }
 }
